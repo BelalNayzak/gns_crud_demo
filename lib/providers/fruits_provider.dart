@@ -10,15 +10,19 @@ class FruitsProvider with ChangeNotifier {
 
   Future<void> loadAllFruits() async {
     try {
-      var url = Uri.parse('http://localhost/api_demo_gns/php/load_all_f.php');
-      final response = await http.post(url);
+      _fruits.clear();
+      var url = Uri.parse(
+          'https://gnscruddemo-default-rtdb.firebaseio.com/fruits.json');
+
+      final response = await http.get(url);
       final Map<String, dynamic> extractedData =
           convert.json.decode(response.body);
+
       extractedData.forEach((fId, fData) {
         _fruits.add(
           Fruit(
             id: fId,
-            name: fData['admin'],
+            name: fData['name'],
             color: fData['color'],
           ),
         );
@@ -32,7 +36,8 @@ class FruitsProvider with ChangeNotifier {
   // Create
   Future<void> insertFruit(String name, String color) async {
     try {
-      var url = Uri.parse('http://localhost/api_demo_gns/php/insert_f.php');
+      var url = Uri.parse(
+          'https://gnscruddemo-default-rtdb.firebaseio.com/fruits.json');
 
       final response = await http.post(
         url,
@@ -58,8 +63,9 @@ class FruitsProvider with ChangeNotifier {
   // Read
   Future<void> getFruit(String fId) async {
     try {
-      var url = Uri.parse('http://localhost/api_demo_gns/php/get_f.php');
-      final response = await http.post(url, body: {'id': fId});
+      var url = Uri.parse(
+          'https://gnscruddemo-default-rtdb.firebaseio.com/fruits/$fId.json');
+      final response = await http.get(url);
       final Map<String, dynamic> extractedData =
           convert.json.decode(response.body);
       extractedData.forEach((fId, fData) {
@@ -81,22 +87,34 @@ class FruitsProvider with ChangeNotifier {
   Future<void> updateFruit(String fId,
       {String? newName, String? newColor}) async {
     try {
-      var url = Uri.parse('http://localhost/api_demo_gns/php/update_f.php');
+      var url = Uri.parse(
+          'https://gnscruddemo-default-rtdb.firebaseio.com/fruits/$fId.json');
 
       if (newName == null && newColor == null) {
         return;
+      } else if (newName != null && newColor == null) {
+        await http.patch(
+          url,
+          body: convert.jsonEncode(<String, String>{
+            'name': newName,
+          }),
+        );
+      } else if (newName == null && newColor != null) {
+        await http.patch(
+          url,
+          body: convert.jsonEncode(<String, String>{
+            'color': newColor,
+          }),
+        );
+      } else {
+        await http.patch(
+          url,
+          body: convert.jsonEncode(<String, String>{
+            'name': newName!,
+            'color': newColor!,
+          }),
+        );
       }
-
-      final response = await http.put(
-        url,
-        body: convert.jsonEncode(<String, String>{
-          'id': fId,
-          'name': newName ?? '',
-          'color': newColor ?? '',
-        }),
-      );
-
-      print(response.toString()); // ex. show dialog to inform the user
 
       Fruit f = _fruits.firstWhere((element) => element.id == fId);
       if (newName != null && newName.isNotEmpty) f.name = newName;
@@ -111,8 +129,9 @@ class FruitsProvider with ChangeNotifier {
   // Delete
   Future<void> deleteFruit(String fId) async {
     try {
-      var url = Uri.parse('http://localhost/api_demo_gns/php/delete_f.php');
-      await http.post(url, body: {'id': fId});
+      var url = Uri.parse(
+          'https://gnscruddemo-default-rtdb.firebaseio.com/fruits/$fId.json');
+      await http.delete(url);
       _fruits.removeWhere((element) => element.id == fId); // del from app
       notifyListeners();
     } catch (e) {

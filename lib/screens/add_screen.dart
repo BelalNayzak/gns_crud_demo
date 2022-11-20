@@ -9,29 +9,39 @@ class AddScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final args =
-        ModalRoute.of(context)!.settings.arguments as Map<String, String>;
+    final args = ModalRoute.of(context)?.settings.arguments;
     final FruitsProvider fpv = Provider.of<FruitsProvider>(context);
 
     TextEditingController ctrlName = TextEditingController();
     TextEditingController ctrlColor = TextEditingController();
 
-    ctrlName.value = (args['name'] ?? '') as TextEditingValue;
-    ctrlColor.value = (args['color'] ?? '') as TextEditingValue;
+    if (args != null) {
+      args as Map<String, String>;
+      if (args['name'] != null) {
+        ctrlName.text = (args['name'])!;
+      }
+      if ((args)['color'] != null) {
+        ctrlColor.text = (args['color'])!;
+      }
+    }
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(args['name'] == null ? 'Add Fruit' : 'Edit Fruit'),
+        title: Text('Fruit'),
         actions: [
           IconButton(
             onPressed: () {
               String name = ctrlName.value.text;
               String color = ctrlColor.value.text;
               if (name.isNotEmpty && color.isNotEmpty) {
-                args['name'] == null
-                    ? fpv.insertFruit(name, color)
-                    : fpv.updateFruit(args['id']!,
-                        newName: args['name'], newColor: args['color']);
+                if (args != null) {
+                  args as Map<String, String>;
+                  fpv.updateFruit(args['id']!,
+                      newName: ctrlName.value.text,
+                      newColor: ctrlColor.value.text);
+                } else {
+                  fpv.insertFruit(name, color);
+                }
                 Navigator.pop(context);
               }
             },
